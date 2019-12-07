@@ -4,7 +4,7 @@ class Operation
     attr_accessor :num_params
   end
 
-  def initialize(inst, params)
+  def initialize(inst, params, **options)
     @instruction = inst
     @params = params
     @advance_pointer_fn = ->(ip) { ip + self.class.num_params + 1 }
@@ -46,9 +46,9 @@ end
 
 module OperationsFactory
 
-  def self.create(inst, params)
+  def self.create(inst, params, **options)
     opcode = inst % 100
-    OperationsFactory::operation(opcode).new(inst, params)
+    OperationsFactory::operation(opcode).new(inst, params, **options)
   end
 
   class Add < Operation
@@ -94,10 +94,19 @@ module OperationsFactory
 
     @num_params = 1
 
+    def initialize(inst, params, **options)
+      super
+      @input = options[:input] || Proc.new { gets.to_i }
+    end
+
     def apply(mem)
       super
       puts "Input: \n"
-      mem[@params[0]] = gets.to_i
+
+      value = @input.()
+      puts "\treceived value: #{value}"
+
+      mem[@params[0]] = value
     end
   end
 

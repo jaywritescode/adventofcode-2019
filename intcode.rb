@@ -28,7 +28,7 @@ class Computer
         op_type = OperationsFactory::operation(instruction)
         op_params = memory.slice(@ip + 1, op_type.num_params)
 
-        operation = OperationsFactory::create(instruction, op_params, options)
+        operation = OperationsFactory::create(instruction, op_params, @options)
 
         begin
           operation.apply(memory)
@@ -42,8 +42,7 @@ class Computer
       memory[0]
     end
 
-    pp @outputs
-    memory
+    @outputs
   end
 end
 
