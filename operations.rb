@@ -60,7 +60,7 @@ module OperationsFactory
       addends = [0, 1].map { |i| param_value(mem, i) }
       write_addr = @params[2]
 
-      puts "\tadding #{addends[0]} and #{addends[1]} and storing result in #{write_addr}"
+      puts "  adding #{addends[0]} and #{addends[1]} and storing result in #{write_addr}"
       mem[write_addr] = addends.sum
     end
   end
@@ -74,7 +74,7 @@ module OperationsFactory
       multiplicands = [0, 1].map { |i| param_value(mem, i) }
       write_addr = @params[2]
 
-      puts "\tmultiplying #{multiplicands[0]} and #{multiplicands[1]} and storing result in #{write_addr}"
+      puts "  multiplying #{multiplicands[0]} and #{multiplicands[1]} and storing result in #{write_addr}"
 
       mem[write_addr] = multiplicands.reduce(&:*)
     end
@@ -96,15 +96,13 @@ module OperationsFactory
 
     def initialize(inst, params, **options)
       super
-      @input = options[:input] || Proc.new { gets.to_i }
+      @input = options[:on_input] || Proc.new { puts "Input: "; gets.to_i }
     end
 
     def apply(mem)
       super
-      puts "Input: \n"
-
       value = @input.()
-      puts "\treceived value: #{value}"
+      puts "  received value: #{value}"
 
       mem[@params[0]] = value
     end
