@@ -4,11 +4,12 @@ require_relative "operations"
 class Computer
   include OperationsFactory
 
-  attr_accessor :ip, :memory
+  attr_accessor :ip, :memory, :halted
 
   def initialize(**options)
     @options = options
     @restart = :run_program
+    @halted = false
   end
 
   def set_memory(memory)
@@ -23,6 +24,7 @@ class Computer
 
   def run_program
     @ip = 0
+    @halted = false
     continue_program
   end
 
@@ -50,10 +52,10 @@ class Computer
         end
       end
     rescue HaltException
-      memory[0]
+      binding.pry
+      @halted = true
+      @restart = :run_program
     end
-
-    @outputs
   end
 end
 
