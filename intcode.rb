@@ -7,16 +7,26 @@ class Computer
   attr_accessor :ip, :memory
 
   def initialize(**options)
-    @ip = 0
-    @outputs = []
     @options = options
+    @restart = :run_program
   end
 
   def set_memory(memory)
     @memory = memory
   end
 
+  def start
+    self.send(@restart)
+  end
+
+  private
+
   def run_program
+    @ip = 0
+    continue_program
+  end
+
+  def continue_program
     raise if memory.nil?
 
     begin
@@ -28,8 +38,16 @@ class Computer
         op_params = memory.slice(@ip + 1, op_type.num_params)
 
         operation = OperationsFactory::create(instruction, op_params, @options)
-        operation.apply(memory)
-        @ip = operation.advance_pointer_fn.call(@ip)
+        begin
+          operation.apply(memory)
+        rescue BlockingException
+          # don't reset the instruction pointer
+          @restart = :continue_program
+          # but do end this method
+          break
+        ensure
+          @ip = operation.advance_pointer_fn.call(@ip)
+        end
       end
     rescue HaltException
       memory[0]
@@ -40,4 +58,7 @@ class Computer
 end
 
 class HaltException < Exception
+end
+
+class BlockingException < Exception
 end
