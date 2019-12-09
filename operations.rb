@@ -114,10 +114,16 @@ module OperationsFactory
 
     @num_params = 1
 
+    def initialize(inst, params, **options)
+      super
+      @output = options[:on_output] || Proc.new { |value| puts value }
+    end
+
     def apply(mem)
       super
-      output = param_value(mem, 0)
-      raise OutputException.new(output)
+      value = param_value(mem, 0)
+      puts "  Sending #{value} to output."
+      @output.(value)
     end
   end
 

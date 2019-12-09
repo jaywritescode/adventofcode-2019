@@ -18,7 +18,6 @@ class Computer
 
   def run_program
     raise if memory.nil?
-    @outputs = []
 
     begin
       loop do
@@ -29,14 +28,8 @@ class Computer
         op_params = memory.slice(@ip + 1, op_type.num_params)
 
         operation = OperationsFactory::create(instruction, op_params, @options)
-
-        begin
-          operation.apply(memory)
-        rescue OutputException => e
-          @outputs << e.value
-        ensure
-          @ip = operation.advance_pointer_fn.call(@ip)
-        end
+        operation.apply(memory)
+        @ip = operation.advance_pointer_fn.call(@ip)
       end
     rescue HaltException
       memory[0]
@@ -47,12 +40,4 @@ class Computer
 end
 
 class HaltException < Exception
-end
-
-class OutputException < Exception
-  attr_reader :value
-
-  def initialize(val)
-    @value = val
-  end
 end
