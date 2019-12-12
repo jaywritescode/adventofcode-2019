@@ -59,7 +59,8 @@ module OperationsFactory
       addends = [0, 1].map { |i| param_value(mem, i) }
       write_addr = @params[2]
 
-      puts "  adding #{addends[0]} and #{addends[1]} and storing result in #{write_addr}"
+      puts "  Adding #{addends[0]} and #{addends[1]} and storing result in #{write_addr}"
+      
       mem[write_addr] = addends.sum
     end
   end
@@ -130,7 +131,7 @@ module OperationsFactory
 
     @num_params = 2
 
-    def initialize
+    def initialize(inst, params, **options)
       super
       @do_jump = nil
     end
@@ -157,7 +158,7 @@ module OperationsFactory
 
     @num_params = 2
 
-    def initialize
+    def initialize(inst, params, **options)
       super
       @do_jump = nil
     end

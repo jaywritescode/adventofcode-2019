@@ -9,7 +9,7 @@ class Computer
   def initialize(**options)
     @options = options
     @halted = false
-    @current_instruction = nil
+    @current_operation = nil
   end
 
   def set_memory(memory)
@@ -20,25 +20,28 @@ class Computer
     @options[:name] || ''
   end
 
-  def current_instruction
-    @current_instruction
+  def current_operation
+    @current_operation
   end
 
   def start
     raise if memory.nil?
     
-    # you might need to move these again
-    @ip = 0
-    @halted = false
+    if current_operation.nil?
+      @ip = 0
+      @halted = false
+    end
 
     run_program
   end
 
   def run_program
+    # binding.pry
     begin
       loop do
-        if current_instruction.nil?
-          puts "\n" << ("=" * 20)
+        puts "\n" << ("=" * 20)
+
+        if current_operation.nil?
           puts "#{name} starting loop..."
           puts "Instruction pointer: #{ip}"
           instruction = memory[ip]
@@ -46,19 +49,19 @@ class Computer
           op_type = OperationsFactory::operation(instruction)
           op_params = memory.slice(@ip + 1, op_type.num_params)
   
-          operation = OperationsFactory::create(instruction, op_params, @options)
-  
-          @current_instruction = operation
+          @current_operation = OperationsFactory::create(instruction, op_params, @options)
+        else
+          puts "#{name} resuming loop with instruction #{current_operation}"
         end
 
         begin
-          operation.apply(memory)
-          @ip = operation.next_instruction_pointer(@ip)
+          current_operation.apply(memory)
+          @ip = current_operation.next_instruction_pointer(@ip)
         rescue BlockingException
           break
         end
 
-        @current_instruction = nil
+        @current_operation = nil
       end
     rescue HaltException
       @halted = true
