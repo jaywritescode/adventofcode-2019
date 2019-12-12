@@ -102,9 +102,11 @@ module OperationsFactory
     def apply(mem)
       super
       value = @input.()
-      puts "  received value: #{value}"
+      write_addr = @params[0]
 
-      mem[@params[0]] = value
+      puts "  Received value #{value} and storing at #{write_addr}"
+
+      mem[write_addr] = value
     end
   end
 
@@ -133,7 +135,12 @@ module OperationsFactory
       super
 
       unless param_value(mem, 0).zero?
-        @advance_pointer_fn = ->(ip) { param_value(mem, 1) }
+        next_addr = param_value(mem, 1)
+
+        puts "  Jumping instruction pointer to #{next_addr}"
+        @advance_pointer_fn = ->(ip) { next_addr }
+      else
+        puts "  Moving instruction pointer forward by 3"
       end
     end
   end

@@ -13,11 +13,15 @@ class Computer
   end
 
   def set_memory(memory)
-    @memory = memory
+    @memory = memory.dup
   end
 
   def start
     self.send(@restart)
+  end
+
+  def name
+    @options[:name] || ''
   end
 
   private
@@ -33,7 +37,9 @@ class Computer
 
     begin
       loop do
-        puts "instruction pointer at: #{ip}"
+        puts "\n" << ("=" * 20)
+        puts "#{name} starting loop..."
+        puts "Instruction pointer: #{ip}"
         instruction = memory[ip]
 
         op_type = OperationsFactory::operation(instruction)
@@ -45,14 +51,13 @@ class Computer
         rescue BlockingException
           # don't reset the instruction pointer
           @restart = :continue_program
-          # but do end this method
+          # but do end this method ----- but this moves the instruction pointer, so Input never completes!
           break
         ensure
           @ip = operation.advance_pointer_fn.call(@ip)
         end
       end
     rescue HaltException
-      binding.pry
       @halted = true
       @restart = :run_program
     end
