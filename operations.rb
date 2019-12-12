@@ -7,7 +7,6 @@ class Operation
   def initialize(inst, params, **options)
     @instruction = inst
     @params = params
-    @advance_pointer_fn = ->(ip) { ip + self.class.num_params + 1 }
   end
 
   def apply(mem)
@@ -39,8 +38,8 @@ class Operation
     puts "#{self.class} (#{@instruction}): #{@params}"
   end
 
-  def advance_pointer_fn
-    @advance_pointer_fn
+  def next_instruction_pointer(ip)
+    ip + self.class.num_params + 1
   end
 end
 
@@ -131,16 +130,25 @@ module OperationsFactory
 
     @num_params = 2
 
+    def initialize
+      super
+      @do_jump = nil
+    end
+
     def apply(mem)
       super
 
       unless param_value(mem, 0).zero?
-        next_addr = param_value(mem, 1)
+        @do_jump = param_value(mem, 1)
+      end
+    end
 
-        puts "  Jumping instruction pointer to #{next_addr}"
-        @advance_pointer_fn = ->(ip) { next_addr }
+    def next_instruction_pointer(ip)
+      if @do_jump
+        puts "  Jumping instruction pointer to #{@do_jump}"
+        @do_jump
       else
-        puts "  Moving instruction pointer forward by 3"
+        super
       end
     end
   end
@@ -149,11 +157,26 @@ module OperationsFactory
 
     @num_params = 2
 
+    def initialize
+      super
+      @do_jump = nil
+    end
+
+
     def apply(mem)
       super
       
       if param_value(mem, 0).zero?
-        @advance_pointer_fn = ->(ip) { param_value(mem, 1) }
+        @do_jump = param_value(mem, 1)
+      end
+    end
+
+    def next_instruction_pointer(ip)
+      if @do_jump
+        puts "  Jumping instruction pointer to #{@do_jump}"
+        @do_jump
+      else
+        super
       end
     end
   end
@@ -184,12 +207,22 @@ module OperationsFactory
     end
   end
 
+  class Noop < Operation
+    
+    @num_params = -1
+
+    def apply(mem)
+      super
+    end
+  end
+
   def self.operation(opcode)
     binding.pry if opcode.nil?
     @@OPERATIONS.fetch(opcode % 100)
   end
 
   @@OPERATIONS = {
+    0 => Noop,
     1 => Add,
     2 => Multiply,
     3 => Input,

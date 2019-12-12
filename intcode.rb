@@ -8,58 +8,60 @@ class Computer
 
   def initialize(**options)
     @options = options
-    @restart = :run_program
     @halted = false
+    @current_instruction = nil
   end
 
   def set_memory(memory)
     @memory = memory.dup
   end
 
-  def start
-    self.send(@restart)
-  end
-
   def name
     @options[:name] || ''
   end
 
-  private
-
-  def run_program
-    @ip = 0
-    @halted = false
-    continue_program
+  def current_instruction
+    @current_instruction
   end
 
-  def continue_program
+  def start
     raise if memory.nil?
+    
+    # you might need to move these again
+    @ip = 0
+    @halted = false
 
+    run_program
+  end
+
+  def run_program
     begin
       loop do
-        puts "\n" << ("=" * 20)
-        puts "#{name} starting loop..."
-        puts "Instruction pointer: #{ip}"
-        instruction = memory[ip]
+        if current_instruction.nil?
+          puts "\n" << ("=" * 20)
+          puts "#{name} starting loop..."
+          puts "Instruction pointer: #{ip}"
+          instruction = memory[ip]
+  
+          op_type = OperationsFactory::operation(instruction)
+          op_params = memory.slice(@ip + 1, op_type.num_params)
+  
+          operation = OperationsFactory::create(instruction, op_params, @options)
+  
+          @current_instruction = operation
+        end
 
-        op_type = OperationsFactory::operation(instruction)
-        op_params = memory.slice(@ip + 1, op_type.num_params)
-
-        operation = OperationsFactory::create(instruction, op_params, @options)
         begin
           operation.apply(memory)
+          @ip = operation.next_instruction_pointer(@ip)
         rescue BlockingException
-          # don't reset the instruction pointer
-          @restart = :continue_program
-          # but do end this method ----- but this moves the instruction pointer, so Input never completes!
           break
-        ensure
-          @ip = operation.advance_pointer_fn.call(@ip)
         end
+
+        @current_instruction = nil
       end
     rescue HaltException
       @halted = true
-      @restart = :run_program
     end
   end
 end
