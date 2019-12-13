@@ -4,13 +4,17 @@ class Operation
     attr_accessor :num_params
   end
 
-  def initialize(inst, params)
+  def initialize(inst, comp)
     @instruction = inst
-    @params = params
+    @computer = comp
   end
 
-  def apply(mem)
+  def apply
     diag
+  end
+
+  def params
+    @params ||= @computer.memory.slice(@computer.ip + 1, self.class.num_params)
   end
 
   def param_types
@@ -30,34 +34,45 @@ class Operation
     end
   end
 
-  def param_value(mem, index)
-    param_types[index] == :immediate ? @params[index] : mem[@params[index]]
+  def param_value(index)
+    param_types[index] == :immediate ? params[index] : @computer.memory[params[index]]
   end
 
   def diag
   end
 
-  def next_instruction_pointer(ip)
-    ip + self.class.num_params + 1
+  def move_instruction_pointer_to(location)
+    @computer.ip = location
+  end
+
+  def next_instruction_pointer
+    @computer.ip + self.class.num_params + 1
+  end
+
+  def write(value:, address:)
+    @computer.memory[address] = value
   end
 end
 
 module OperationsFactory
 
-  def self.create(inst, params, **options)
+  def self.create(inst, comp)
     opcode = inst % 100
-    OperationsFactory::operation(opcode).new(inst, params, **options)
+    OperationsFactory::operation(opcode).new(inst, comp)
   end
 
   class Add < Operation
 
     @num_params = 3
 
-    def apply(mem)
+    def apply
       super
-      addends = [0, 1].map { |i| param_value(mem, i) }
-      write_addr = @params[2]
-      mem[write_addr] = addends.sum
+
+      addends = [0, 1].map { |i| param_value(i) }
+      write_addr = params[2]
+
+      write value: addends.sum, address: write_addr
+      move_instruction_pointer_to next_instruction_pointer
     end
   end
 
@@ -65,11 +80,14 @@ module OperationsFactory
 
     @num_params = 3
 
-    def apply(mem)
+    def apply
       super
-      multiplicands = [0, 1].map { |i| param_value(mem, i) }
+
+      multiplicands = [0, 1].map { |i| param_value(i) }
       write_addr = @params[2]
-      mem[write_addr] = multiplicands.reduce(&:*)
+
+      write value: multiplicands.reduce(&:*), address: write_addr
+      move_instruction_pointer_to next_instruction_pointer
     end
   end
 
@@ -77,7 +95,7 @@ module OperationsFactory
 
     @num_params = 0
 
-    def apply(mem)
+    def apply
       super
       raise HaltException
     end
@@ -87,16 +105,14 @@ module OperationsFactory
 
     @num_params = 1
 
-    def initialize(inst, params, **options)
+    def apply
       super
-      @input = options[:on_input] || Proc.new { puts "Input: "; gets.to_i }
-    end
 
-    def apply(mem)
-      super
-      value = @input.()
-      write_addr = @params[0]
-      mem[write_addr] = value
+      value = @computer.input_supplier.()
+      write_addr = params[0]
+
+      write value: value, address: write_addr
+      move_instruction_pointer_to next_instruction_pointer
     end
   end
 
@@ -104,15 +120,13 @@ module OperationsFactory
 
     @num_params = 1
 
-    def initialize(inst, params, **options)
+    def apply
       super
-      @output = options[:on_output] || Proc.new { |value| puts value }
-    end
 
-    def apply(mem)
-      super
-      value = param_value(mem, 0)
-      @output.(value)
+      value = param_value(0)
+      @computer.output_consumer.(value)
+
+      move_instruction_pointer_to next_instruction_pointer
     end
   end
 
@@ -120,25 +134,12 @@ module OperationsFactory
 
     @num_params = 2
 
-    def initialize(inst, params, **options)
-      super
-      @do_jump = nil
-    end
-
-    def apply(mem)
+    def apply
       super
 
-      unless param_value(mem, 0).zero?
-        @do_jump = param_value(mem, 1)
-      end
-    end
-
-    def next_instruction_pointer(ip)
-      if @do_jump
-        @do_jump
-      else
-        super
-      end
+      move_instruction_pointer_to param_value(0).zero? ?
+                                    next_instruction_pointer :
+                                    param_value(1)
     end
   end
 
@@ -146,25 +147,12 @@ module OperationsFactory
 
     @num_params = 2
 
-    def initialize(inst, params, **options)
+    def apply
       super
-      @do_jump = nil
-    end
 
-    def apply(mem)
-      super
-      
-      if param_value(mem, 0).zero?
-        @do_jump = param_value(mem, 1)
-      end
-    end
-
-    def next_instruction_pointer(ip)
-      if @do_jump
-        @do_jump
-      else
-        super
-      end
+      move_instruction_pointer_to param_value(0).zero? ?
+                                    param_value(1) :
+                                    next_instruction_pointer
     end
   end
 
@@ -172,12 +160,14 @@ module OperationsFactory
 
     @num_params = 3
 
-    def apply(mem)
+    def apply
       super
-      compare = [0, 1].map { |i| param_value(@params, i) }
-      write_addr = @params[2]
 
-      mem[write_addr] = compare[0] < compare[1] ? 1 : 0
+      compare = [0, 1].map { |i| param_value(i) }
+      write_addr = params[2]
+
+      write value: compare[0] < compare[1] ? 1 : 0, address: write_addr
+      move_instruction_pointer_to next_instruction_pointer
     end
   end
 
@@ -185,17 +175,19 @@ module OperationsFactory
 
     @num_params = 3
 
-    def apply(mem)
+    def apply
       super
-      compare = [0, 1].map { |i| param_value(mem, i) }
-      write_addr = @params[2]
 
-      mem[write_addr] = compare[0] == compare[1] ? 1 : 0
+      compare = [0, 1].map { |i| param_value(i) }
+      write_addr = params[2]
+
+      write value: compare[0] == compare[1] ? 1 : 0, address: write_addr
+      move_instruction_pointer_to next_instruction_pointer
     end
   end
 
   class Noop < Operation
-    
+
     @num_params = -1
 
     def apply(mem)

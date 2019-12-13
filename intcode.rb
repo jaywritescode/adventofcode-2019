@@ -4,6 +4,7 @@ require_relative "operations"
 class Computer
   include OperationsFactory
 
+  attr_reader :input_supplier, :output_consumer
   attr_accessor :ip, :memory, :halted
 
   def initialize(**options)
@@ -29,7 +30,7 @@ class Computer
 
   def start
     raise if memory.nil?
-    
+
     if current_operation.nil?
       @ip = 0
       @halted = false
@@ -43,16 +44,11 @@ class Computer
       loop do
         if current_operation.nil?
           instruction = memory[ip]
-  
-          op_type = OperationsFactory::operation(instruction)
-          op_params = memory.slice(@ip + 1, op_type.num_params)
-  
-          @current_operation = OperationsFactory::create(instruction, op_params)
+          @current_operation = OperationsFactory::create(instruction, self)
         end
 
         begin
-          current_operation.apply(memory)
-          @ip = current_operation.next_instruction_pointer(@ip)
+          current_operation.apply
         rescue BlockingException
           break
         end
