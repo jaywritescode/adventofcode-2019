@@ -36,7 +36,6 @@ class Computer
   end
 
   def run_program
-    # binding.pry
     begin
       loop do
         puts "\n" << ("=" * 20)
