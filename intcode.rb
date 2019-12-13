@@ -5,12 +5,13 @@ class Computer
   include OperationsFactory
 
   attr_reader :input_supplier, :output_consumer
-  attr_accessor :ip, :memory, :halted
+  attr_accessor :ip, :memory, :halted, :relative_base
 
   def initialize(**options)
     @options = options
     @halted = false
     @current_operation = nil
+    @relative_base = 0
 
     @input_supplier = options[:on_input] || Proc.new { puts "Input: "; gets.to_i }
     @output_consumer = options[:on_output] || Proc.new { |value| puts value }

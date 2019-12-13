@@ -100,4 +100,12 @@ class ComputerTest < Minitest::Test
     c.start
     assert_equal [1108, 8, 3, 5, 99, 0], c.memory
   end
+
+  def test_offset_relative_base
+    c = Computer.new
+    c.set_memory [109, 4, 99]
+
+    c.start
+    assert_equal 4, c.relative_base
+  end
 end

@@ -28,6 +28,8 @@ class Operation
         :position
       elsif val == 1
         :immediate
+      elsif val == 2
+        :relative
       else
         raise "invalid parameter type"
       end
@@ -35,7 +37,14 @@ class Operation
   end
 
   def param_value(index)
-    param_types[index] == :immediate ? params[index] : @computer.memory[params[index]]
+    case param_types[index]
+    when :immediate
+      params[index]
+    when :position
+      @computer.memory[params[index]]
+    when :relative
+      @computer.memory[params[@computer.relative_base + index]]
+    end
   end
 
   def diag
@@ -186,6 +195,20 @@ module OperationsFactory
     end
   end
 
+  class OffsetRelativeBase < Operation
+
+    @num_params = 1
+
+    def apply
+      super
+
+      value = param_value(0)
+      @computer.relative_base += value
+
+      move_instruction_pointer_to next_instruction_pointer
+    end
+  end
+
   class Noop < Operation
 
     @num_params = -1
@@ -210,6 +233,7 @@ module OperationsFactory
     6 => JumpIfFalse,
     7 => LessThan,
     8 => Equals,
+    9 => OffsetRelativeBase,
     99 => Halt
   }
 end
