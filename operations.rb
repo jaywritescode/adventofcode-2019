@@ -174,7 +174,7 @@ module OperationsFactory
 
     def apply(mem)
       super
-      compare = [0, 1].map { |i| param_value(mem, i) }
+      compare = [0, 1].map { |i| param_value(@params, i) }
       write_addr = @params[2]
 
       mem[write_addr] = compare[0] < compare[1] ? 1 : 0
