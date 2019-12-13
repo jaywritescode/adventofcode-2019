@@ -41,9 +41,10 @@ class Operation
     when :immediate
       params[index]
     when :position
-      @computer.memory[params[index]]
+      read(params[index])
     when :relative
-      @computer.memory[params[@computer.relative_base + index]]
+      address = @computer.relative_base + params[index]
+      read(address)
     end
   end
 
@@ -56,6 +57,14 @@ class Operation
 
   def next_instruction_pointer
     @computer.ip + self.class.num_params + 1
+  end
+
+  def read(address)
+    if @computer.memory.count < address || @computer.memory[address].nil?
+      @computer.memory[address] = 0
+    end
+
+    @computer.memory[address]
   end
 
   def write(value:, address:)
@@ -93,7 +102,7 @@ module OperationsFactory
       super
 
       multiplicands = [0, 1].map { |i| param_value(i) }
-      write_addr = @params[2]
+      write_addr = params[2]
 
       write value: multiplicands.reduce(&:*), address: write_addr
       move_instruction_pointer_to next_instruction_pointer
