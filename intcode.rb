@@ -38,19 +38,13 @@ class Computer
   def run_program
     begin
       loop do
-        puts "\n" << ("=" * 20)
-
         if current_operation.nil?
-          puts "#{name} starting loop..."
-          puts "Instruction pointer: #{ip}"
           instruction = memory[ip]
   
           op_type = OperationsFactory::operation(instruction)
           op_params = memory.slice(@ip + 1, op_type.num_params)
   
           @current_operation = OperationsFactory::create(instruction, op_params, @options)
-        else
-          puts "#{name} resuming loop with instruction #{current_operation}"
         end
 
         begin

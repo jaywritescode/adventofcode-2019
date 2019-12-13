@@ -35,7 +35,6 @@ class Operation
   end
 
   def diag
-    puts "#{self.class} (#{@instruction}): #{@params}"
   end
 
   def next_instruction_pointer(ip)
@@ -58,9 +57,6 @@ module OperationsFactory
       super
       addends = [0, 1].map { |i| param_value(mem, i) }
       write_addr = @params[2]
-
-      puts "  Adding #{addends[0]} and #{addends[1]} and storing result in #{write_addr}"
-      
       mem[write_addr] = addends.sum
     end
   end
@@ -73,9 +69,6 @@ module OperationsFactory
       super
       multiplicands = [0, 1].map { |i| param_value(mem, i) }
       write_addr = @params[2]
-
-      puts "  multiplying #{multiplicands[0]} and #{multiplicands[1]} and storing result in #{write_addr}"
-
       mem[write_addr] = multiplicands.reduce(&:*)
     end
   end
@@ -103,9 +96,6 @@ module OperationsFactory
       super
       value = @input.()
       write_addr = @params[0]
-
-      puts "  Received value #{value} and storing at #{write_addr}"
-
       mem[write_addr] = value
     end
   end
@@ -122,7 +112,6 @@ module OperationsFactory
     def apply(mem)
       super
       value = param_value(mem, 0)
-      puts "  Sending #{value} to output."
       @output.(value)
     end
   end
@@ -146,7 +135,6 @@ module OperationsFactory
 
     def next_instruction_pointer(ip)
       if @do_jump
-        puts "  Jumping instruction pointer to #{@do_jump}"
         @do_jump
       else
         super
@@ -163,7 +151,6 @@ module OperationsFactory
       @do_jump = nil
     end
 
-
     def apply(mem)
       super
       
@@ -174,7 +161,6 @@ module OperationsFactory
 
     def next_instruction_pointer(ip)
       if @do_jump
-        puts "  Jumping instruction pointer to #{@do_jump}"
         @do_jump
       else
         super
