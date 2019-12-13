@@ -4,7 +4,7 @@ class Operation
     attr_accessor :num_params
   end
 
-  def initialize(inst, params, **options)
+  def initialize(inst, params)
     @instruction = inst
     @params = params
   end

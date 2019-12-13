@@ -10,6 +10,9 @@ class Computer
     @options = options
     @halted = false
     @current_operation = nil
+
+    @input_supplier = options[:on_input] || Proc.new { puts "Input: "; gets.to_i }
+    @output_consumer = options[:on_output] || Proc.new { |value| puts value }
   end
 
   def set_memory(memory)
@@ -44,7 +47,7 @@ class Computer
           op_type = OperationsFactory::operation(instruction)
           op_params = memory.slice(@ip + 1, op_type.num_params)
   
-          @current_operation = OperationsFactory::create(instruction, op_params, @options)
+          @current_operation = OperationsFactory::create(instruction, op_params)
         end
 
         begin
