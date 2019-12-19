@@ -60,11 +60,7 @@ class Operation
   end
 
   def read(address)
-    if @computer.memory.count < address || @computer.memory[address].nil?
-      @computer.memory[address] = 0
-    end
-
-    @computer.memory[address]
+    @computer.memory[address] ||= 0
   end
 
   def write(value:, address:)
