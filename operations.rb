@@ -49,6 +49,9 @@ class Operation
   end
 
   def diag
+    # puts
+    # puts "------ Instruction pointer: #{@computer.ip}"
+    # puts "#{self.class.name} (#{@instruction}): #{params}"
   end
 
   def move_instruction_pointer_to(location)
@@ -64,6 +67,7 @@ class Operation
   end
 
   def write(value:, address:)
+    # puts "  -- writing #{value} to address #{address}"
     @computer.memory[address] = value
   end
 end
@@ -84,6 +88,9 @@ module OperationsFactory
 
       addends = [0, 1].map { |i| param_value(i) }
       write_addr = params[2]
+      # (addends + [write_addr]).each_with_index do |p, i|
+      #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
+      # end
 
       write value: addends.sum, address: write_addr
       move_instruction_pointer_to next_instruction_pointer
@@ -100,6 +107,9 @@ module OperationsFactory
       multiplicands = [0, 1].map { |i| param_value(i) }
       write_addr = params[2]
 
+      # (multiplicands + [write_addr]).each_with_index do |p, i|
+      #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
+      # end
       write value: multiplicands.reduce(&:*), address: write_addr
       move_instruction_pointer_to next_instruction_pointer
     end
@@ -124,6 +134,7 @@ module OperationsFactory
 
       value = @computer.input_supplier.()
       write_addr = params[0]
+      # puts "  param[0]: #{param_types[0]} resolves to #{write_addr}"
 
       write value: value, address: write_addr
       move_instruction_pointer_to next_instruction_pointer
@@ -154,6 +165,10 @@ module OperationsFactory
       move_instruction_pointer_to param_value(0).zero? ?
                                     next_instruction_pointer :
                                     param_value(1)
+      # [switch, param_value(1)].each_with_index do |p, i|
+      #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
+      # end
+      move_instruction_pointer_to next_ptr
     end
   end
 
@@ -167,6 +182,10 @@ module OperationsFactory
       move_instruction_pointer_to param_value(0).zero? ?
                                     param_value(1) :
                                     next_instruction_pointer
+      # [switch, param_value(1)].each_with_index do |p, i|
+      #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
+      # end
+      move_instruction_pointer_to next_ptr
     end
   end
 
@@ -180,6 +199,9 @@ module OperationsFactory
       compare = [0, 1].map { |i| param_value(i) }
       write_addr = params[2]
 
+      # (compare + [write_addr]).each_with_index do |p, i|
+      #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
+      # end
       write value: compare[0] < compare[1] ? 1 : 0, address: write_addr
       move_instruction_pointer_to next_instruction_pointer
     end
@@ -195,6 +217,9 @@ module OperationsFactory
       compare = [0, 1].map { |i| param_value(i) }
       write_addr = params[2]
 
+      # (compare + [write_addr]).each_with_index do |p, i|
+      #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
+      # end
       write value: compare[0] == compare[1] ? 1 : 0, address: write_addr
       move_instruction_pointer_to next_instruction_pointer
     end
@@ -210,6 +235,8 @@ module OperationsFactory
       value = param_value(0)
       @computer.relative_base += value
 
+      # puts "  params[0]: #{param_types[0]} resolves to #{value}"
+      # puts " -- relative base is now #{@computer.relative_base}"
       move_instruction_pointer_to next_instruction_pointer
     end
   end
