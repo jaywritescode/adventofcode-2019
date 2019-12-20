@@ -87,7 +87,12 @@ module OperationsFactory
       super
 
       addends = [0, 1].map { |i| param_value(i) }
-      write_addr = params[2]
+      write_addr = if param_types[2] == :position
+                     params[2]
+                   elsif param_types[2] == :relative
+                     params[2] + @computer.relative_base
+                   end
+
       # (addends + [write_addr]).each_with_index do |p, i|
       #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
       # end
@@ -105,7 +110,11 @@ module OperationsFactory
       super
 
       multiplicands = [0, 1].map { |i| param_value(i) }
-      write_addr = params[2]
+      write_addr = if param_types[2] == :position
+                     params[2]
+                   elsif param_types[2] == :relative
+                     params[2] + @computer.relative_base
+                   end
 
       # (multiplicands + [write_addr]).each_with_index do |p, i|
       #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
@@ -133,7 +142,12 @@ module OperationsFactory
       super
 
       value = @computer.input_supplier.()
-      write_addr = params[0]
+      write_addr = if param_types[0] == :position
+                     params[0]
+                   elsif param_types[0] == :relative
+                     params[0] + @computer.relative_base
+                   end
+
       # puts "  param[0]: #{param_types[0]} resolves to #{write_addr}"
 
       write value: value, address: write_addr
@@ -162,9 +176,13 @@ module OperationsFactory
     def apply
       super
 
-      move_instruction_pointer_to param_value(0).zero? ?
-                                    next_instruction_pointer :
-                                    param_value(1)
+      switch = param_value(0)
+      next_ptr = if switch.zero?
+                   next_instruction_pointer
+                 else
+                   param_value(1)
+                 end
+
       # [switch, param_value(1)].each_with_index do |p, i|
       #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
       # end
@@ -179,9 +197,13 @@ module OperationsFactory
     def apply
       super
 
-      move_instruction_pointer_to param_value(0).zero? ?
-                                    param_value(1) :
-                                    next_instruction_pointer
+      switch = param_value(0)
+      next_ptr = if switch.zero?
+                   param_value(1)
+                 else
+                   next_instruction_pointer
+                 end
+
       # [switch, param_value(1)].each_with_index do |p, i|
       #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
       # end
@@ -197,7 +219,11 @@ module OperationsFactory
       super
 
       compare = [0, 1].map { |i| param_value(i) }
-      write_addr = params[2]
+      write_addr = if param_types[2] == :position
+                     params[2]
+                   elsif param_types[2] == :relative
+                     params[2] + @computer.relative_base
+                   end
 
       # (compare + [write_addr]).each_with_index do |p, i|
       #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
@@ -215,7 +241,12 @@ module OperationsFactory
       super
 
       compare = [0, 1].map { |i| param_value(i) }
-      write_addr = params[2]
+      write_addr = if param_types[2] == :position
+                     params[2]
+                   elsif param_types[2] == :relative
+                     params[2] + @computer.relative_base
+                   end
+
 
       # (compare + [write_addr]).each_with_index do |p, i|
       #   puts "  param[#{i}]: #{param_types[i]} resolves to #{p}"
